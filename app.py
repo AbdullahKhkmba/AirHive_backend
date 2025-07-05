@@ -1,11 +1,15 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_file
 from flask_sqlalchemy import SQLAlchemy
 import bcrypt
+from werkzeug.utils import secure_filename
+import io
+from flask_cors import CORS
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
+CORS(app)
 
 # --- User Model ---
 class UserModel(db.Model):
@@ -20,6 +24,7 @@ class JobModel(db.Model):
     file_name = db.Column(db.String(100), nullable=False)
     file_path = db.Column(db.String(255), nullable=False)
     priority = db.Column(db.Integer, nullable=False)
+    file_data = db.Column(db.LargeBinary, nullable=True)  # <-- new field
     user_id = db.Column(db.Integer, db.ForeignKey('user_model.id'), nullable=False)
 
 # --- Registration Endpoint ---
@@ -102,6 +107,7 @@ def get_jobs(username):
 
     jobs_json = [
         {
+            'id': job.id,
             'file_name': job.file_name,
             'file_path': job.file_path,
             'priority': job.priority
@@ -110,6 +116,48 @@ def get_jobs(username):
     ]
 
     return jsonify(jobs_json), 200
+
+@app.route('/upload_file/<username>/<int:job_id>', methods=['PUT'])
+def upload_file(username, job_id):
+    user = UserModel.query.filter_by(username=username).first()
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
+
+    job = JobModel.query.get(job_id)
+    if not job or job.user_id != user.id:
+        return jsonify({'error': 'Job not found or does not belong to user'}), 404
+
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file part in the request'}), 400
+
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'error': 'No file selected'}), 400
+
+    job.file_data = file.read()
+    db.session.commit()
+
+    return jsonify({'message': 'File uploaded successfully'}), 200
+
+@app.route('/download_file/<username>/<int:job_id>', methods=['GET'])
+def download_file(username, job_id):
+    user = UserModel.query.filter_by(username=username).first()
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
+
+    job = JobModel.query.get(job_id)
+    if not job or job.user_id != user.id:
+        return jsonify({'error': 'Job not found or does not belong to user'}), 404
+
+    if not job.file_data:
+        return jsonify({'error': 'No file uploaded for this job'}), 404
+
+    return send_file(
+        io.BytesIO(job.file_data),
+        as_attachment=True,
+        download_name=job.file_name,
+        mimetype='application/octet-stream'
+    )
 
 # --- Initialize Database ---
 with app.app_context():
