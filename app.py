@@ -71,37 +71,73 @@ def login():
     access_token = create_access_token(identity=user.id)
     return jsonify({'access_token': access_token}), 200
 
-# --- Replace All Jobs for Logged-in User ---
+# --- Send Jobs to the database ---
 @app.route('/sync_jobs', methods=['POST'])
 @jwt_required()
 def replace_jobs():
     user_id = get_jwt_identity()
     user = UserModel.query.get(user_id)
 
-    job_list = request.get_json()
-    if not isinstance(job_list, list):
+    incoming_jobs = request.get_json()
+    if not isinstance(incoming_jobs, list):
         return jsonify({'error': 'Expected a list of jobs'}), 400
 
-    JobModel.query.filter_by(user_id=user.id).delete()
+    # Validate and map incoming jobs by file_path
+    incoming_job_map = {
+        job['file_path']: job for job in incoming_jobs
+        if job.get('file_name') and job.get('file_path') and job.get('priority') is not None
+    }
 
-    for job in job_list:
-        file_name = job.get('file_name')
-        file_path = job.get('file_path')
-        priority = job.get('priority')
+    if len(incoming_job_map) != len(incoming_jobs):
+        return jsonify({'error': 'Each job must have file_name, file_path, and priority'}), 400
 
-        if not file_name or not file_path or priority is None:
-            return jsonify({'error': 'Each job must have file_name, file_path, and priority'}), 400
+    # Fetch all existing jobs for this user
+    existing_jobs = JobModel.query.filter_by(user_id=user.id).all()
+    existing_job_map = {job.file_path: job for job in existing_jobs}
 
-        new_job = JobModel(
-            file_name=file_name,
-            file_path=file_path,
-            priority=priority,
-            user_id=user.id
-        )
-        db.session.add(new_job)
+    to_add = []
+    to_keep = []
+    to_delete = []
+
+    # Identify new and existing jobs
+    for file_path, job_data in incoming_job_map.items():
+        if file_path in existing_job_map:
+            to_keep.append(file_path)
+            # Optional: update priority or file_name if needed
+            existing_job = existing_job_map[file_path]
+            if (existing_job.file_name != job_data['file_name'] or
+                existing_job.priority != job_data['priority']):
+                existing_job.file_name = job_data['file_name']
+                existing_job.priority = job_data['priority']
+        else:
+            new_job = JobModel(
+                file_name=job_data['file_name'],
+                file_path=job_data['file_path'],
+                priority=job_data['priority'],
+                user_id=user.id
+            )
+            to_add.append(new_job)
+
+    # Identify jobs to delete
+    for file_path, job in existing_job_map.items():
+        if file_path not in incoming_job_map:
+            to_delete.append(job)
+
+    # Apply changes
+    for job in to_add:
+        db.session.add(job)
+    for job in to_delete:
+        db.session.delete(job)
 
     db.session.commit()
-    return jsonify({'message': 'Jobs replaced successfully'}), 200
+
+    return jsonify({
+        'message': 'Jobs synced successfully',
+        'added': len(to_add),
+        'deleted': len(to_delete),
+        'kept': len(to_keep),
+        'updated': len(to_keep)  # optional
+    }), 200
 
 # --- Get All Jobs for Logged-in User ---
 @app.route('/sync_jobs', methods=['GET'])
