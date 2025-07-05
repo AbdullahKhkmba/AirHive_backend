@@ -10,14 +10,14 @@
 
 - **POST** /register
 - **Request Body (JSON):**
-
-```
-{
-  "username": "your_username",
-  "password": "your_password"
-}
-```
-
+    
+    ```
+    {
+      "username": "your_username",
+      "password": "your_password"
+    }
+    ```
+    
 - **Response:**
     - 201 Created on success
     - 400 if fields missing
@@ -29,27 +29,28 @@
 
 - **POST** /login
 - **Request Body (JSON):**
-
-```
-{
-  "username": "your_username",
-  "password": "your_password"
-}
-```
-
+    
+    ```
+    {
+      "username": "your_username",
+      "password": "your_password"
+    }
+    ```
+    
 - **Response:**
-
-```
-{
-  "access_token": "JWT_TOKEN"
-}
-```
-
+    
+    ```
+    {
+      "access_token": "JWT_TOKEN"
+    }
+    ```
+    
 - Use the returned token in future requests:
-
-```
-Authorization: Bearer JWT_TOKEN
-```
+    
+    ```
+    Authorization: Bearer JWT_TOKEN
+    ```
+    
 
 ---
 
@@ -67,35 +68,36 @@ All /sync_jobs, /upload_file, and /download_file endpoints require a **valid JWT
     - Updates changed ones
     - Deletes jobs not in the list
 - **Request Headers:**
-
-```
-Authorization: Bearer JWT_TOKEN
-```
-
+    
+    ```
+    Authorization: Bearer JWT_TOKEN
+    ```
+    
 - **Request Body (JSON):**
-
-```
-[
-  {
-    "file_name": "example.gcode",
-    "file_path": "/user/jobs/example.gcode",
-    "priority": 1
-  },
-  ...
-]
-```
-
+    
+    ```
+    [
+      {
+        "file_name": "example.gcode",
+        "file_path": "/user/jobs/example.gcode",
+        "priority": 1
+      },
+      ...
+    ]
+    ```
+    
 - **Response:**
-
-```
-{
-  "message": "Jobs synced successfully",
-  "added": 1,
-  "deleted": 0,
-  "kept": 1,
-  "updated": 1
-}
-```
+    
+    ```
+    {
+      "message": "Jobs synced successfully",
+      "added": 1,
+      "deleted": 0,
+      "kept": 1,
+      "updated": 1
+    }
+    ```
+    
 
 ---
 
@@ -103,24 +105,25 @@ Authorization: Bearer JWT_TOKEN
 
 - **GET** /sync_jobs
 - **Headers:**
-
-```
-Authorization: Bearer JWT_TOKEN
-```
-
+    
+    ```
+    Authorization: Bearer JWT_TOKEN
+    ```
+    
 - **Response:**
-
-```
-[
-  {
-    "id": 1,
-    "file_name": "example.gcode",
-    "file_path": "/user/jobs/example.gcode",
-    "priority": 1,
-    "file_exist": true
-  }
-]
-```
+    
+    ```
+    [
+      {
+        "id": 1,
+        "file_name": "example.gcode",
+        "file_path": "/user/jobs/example.gcode",
+        "priority": 1,
+        "file_exist": true
+      }
+    ]
+    ```
+    
 
 ---
 
@@ -129,20 +132,21 @@ Authorization: Bearer JWT_TOKEN
 - **PUT** /upload_file/<job_id>
 - Uploads binary file data to an existing job
 - **Headers:**
-
-```
-Authorization: Bearer JWT_TOKEN
-Content-Type: multipart/form-data
-```
-
+    
+    ```
+    Authorization: Bearer JWT_TOKEN
+    Content-Type: multipart/form-data
+    ```
+    
 - **Form Field:** file (binary file)
 - **Response:**
-
-```
-{
-  "message": "File uploaded successfully"
-}
-```
+    
+    ```
+    {
+      "message": "File uploaded successfully"
+    }
+    ```
+    
 
 ---
 
@@ -151,11 +155,11 @@ Content-Type: multipart/form-data
 - **GET** /download_file/<job_id>
 - Downloads the binary file from a job
 - **Headers:**
-
-```
-Authorization: Bearer JWT_TOKEN
-```
-
+    
+    ```
+    Authorization: Bearer JWT_TOKEN
+    ```
+    
 - **Response:** File as attachment (with original file name)
 
 ---
@@ -164,6 +168,4 @@ Authorization: Bearer JWT_TOKEN
 
 - file_path is used as a unique identifier per user.
 - Job changes are automatically detected and synced on /sync_jobs.
-- JWT token is required for all operations except register/login.
-
----
+- JWT token is required for all operations except register/login
