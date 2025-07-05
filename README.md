@@ -18,7 +18,6 @@
 }
 ```
 
-- 
 - **Response:**
     - 201 Created on success
     - 400 if fields missing
@@ -38,7 +37,6 @@
 }
 ```
 
-- 
 - **Response:**
 
 ```
@@ -47,7 +45,6 @@
 }
 ```
 
-- 
 - Use the returned token in future requests:
 
 ```
@@ -75,7 +72,6 @@ All /sync_jobs, /upload_file, and /download_file endpoints require a **valid JWT
 Authorization: Bearer JWT_TOKEN
 ```
 
-- 
 - **Request Body (JSON):**
 
 ```
@@ -89,7 +85,6 @@ Authorization: Bearer JWT_TOKEN
 ]
 ```
 
-- 
 - **Response:**
 
 ```
@@ -113,7 +108,6 @@ Authorization: Bearer JWT_TOKEN
 Authorization: Bearer JWT_TOKEN
 ```
 
-- 
 - **Response:**
 
 ```
@@ -141,7 +135,6 @@ Authorization: Bearer JWT_TOKEN
 Content-Type: multipart/form-data
 ```
 
-- 
 - **Form Field:** file (binary file)
 - **Response:**
 
@@ -163,7 +156,6 @@ Content-Type: multipart/form-data
 Authorization: Bearer JWT_TOKEN
 ```
 
-- 
 - **Response:** File as attachment (with original file name)
 
 ---
